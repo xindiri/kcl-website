@@ -117,6 +117,7 @@ Currently supported for <code>--provider</code>:
 <span class="opt-row"><span class="opt-flag">--user string</span><span class="opt-desc">SSH user, used with --host (default "root")</span></span>
 <span class="opt-row"><span class="opt-flag">--key string</span><span class="opt-desc">Path to SSH private key, used with --host (auto-generated if omitted)</span></span>
 <span class="opt-row"><span class="opt-flag">--password string</span><span class="opt-desc">SSH password, used with --host (only needed the first time)</span></span>
+<span class="opt-row"><span class="opt-flag">--skip-bootstrap boolean</span><span class="opt-desc">Skip bootstrap, installing just the kubernetes cluster without any additional components like cert-manager and nginx-ingress-controller.</span></span>
 </pre>
 </section>
 
@@ -147,6 +148,32 @@ kcl use hello
 <p class="cmd-flags">No flags. Takes one positional argument, the cluster name.</p>
 </section>
 
+<section class="cmd" id="cli-addons">
+<h2>kcl addons</h2>
+<p>
+    Installs and manages the cluster's addons, including cert-manager, ingress, and other common addons.
+</p>
+<h3>kcl addons bootstrap &lt;cluster-name&gt;</h3>
+<p>
+    Installs the following base addons on the cluster:
+</p>
+<ul>
+    <li><code>cert-manager</code></li>
+    <li><code>nginx-ingress-controller</code></li>
+    <li><code>letsencrypt-prod cluster issuer</code></li>
+</ul>
+<pre>
+kcl addons bootstrap hello
+</pre>
+<p class="cmd-flags">No flags. Takes one positional argument: cluster name.</p>
+<p class="cmd-flags">
+kcl detects your node's Kubernetes distribution (k0s, k3s, or kubeadm)
+automatically and restarts the control plane to apply the change. You may be
+prompted for the server's sudo password. Allow ~15 seconds after it finishes
+before running <code>kubectl</code> commands again.
+</p>
+</section>
+
 <section class="cmd" id="cli-sans">
 <h2>kcl sans add &lt;cluster-name&gt; &lt;ip-or-domain&gt;</h2>
 <p>
@@ -154,7 +181,7 @@ Adds a trusted IP address or domain name to the cluster's API server
 certificate, so you can connect to <code>kubectl</code> using that address
 without a certificate error.
 </p>
-<pre>:
+<pre>
 kcl sans add hello api.example.com
 </pre>
 <p class="cmd-flags">No flags. Takes two positional arguments: cluster name, then the IP address or domain to trust.</p>
