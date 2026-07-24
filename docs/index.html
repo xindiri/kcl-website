@@ -6,61 +6,167 @@
 <title>KCL Docs</title>
 <link rel="stylesheet" href="../styles.css">
 </head>
-
 <body>
-
 <div class="docs-wrapper">
-
 <aside class="sidebar">
   <h2>KCL Docs</h2>
-  <a href="#">Getting Started</a>
-  <a href="#">Installation</a>
-  <a href="#">Create Cluster</a>
-  <a href="#">Providers</a>
-  <a href="#">Architecture</a>
-  <a href="#">CLI Reference</a>
+  <a href="#getting-started">Getting Started</a>
+  <a href="#installation">Installation</a>
+  <a href="#create-cluster">Create a Cluster</a>
+  <a href="#providers">Providers</a>
+  <a href="#cli-reference">CLI Reference</a>
+  <a href="#cli-create" class="sidebar-sub">create</a>
+  <a href="#cli-list" class="sidebar-sub">list</a>
+  <a href="#cli-status" class="sidebar-sub">status</a>
+  <a href="#cli-use" class="sidebar-sub">use</a>
+  <a href="#cli-sans" class="sidebar-sub">sans add</a>
 </aside>
-
 <main class="docs">
 
-<h1>Getting Started</h1>
-
+<h1 id="getting-started">Getting Started</h1>
 <p>
-Kubernetes Cluster Launcher allows you to create Kubernetes clusters
-on any VPS provider automatically.
+kcl (Kubernetes Cluster Launcher) creates a ready-to-use Kubernetes cluster
+on a VPS &mdash; either one it provisions for you, or one you already have.
 </p>
 
-<h2>Install CLI</h2>
-
+<h2 id="installation">Install CLI</h2>
 <pre>
-curl -sfL https://kcl-zuq70iw.onwolke.app/install.sh | sh
-
+curl -sfL https://get.kcl.wolke.host | sh
 </pre>
 
+<h1 id="create-cluster">Create a Cluster</h1>
+<p>
+There are two ways to create a cluster, depending on whether you want kcl to
+provision the server for you or you already have one.
+</p>
 
-
-<h2>Create Cluster</h2>
-
+<h2>Option A: Let kcl provision a server</h2>
+<p>
+kcl creates the VPS, installs Kubernetes, and bootstraps it in one step.
+Requires the <code>HCLOUD_TOKEN</code> environment variable, set to a
+valid Hetzner Cloud API token.
+</p>
 <pre>
-kcl create hello --host=89.167.53.25
+export HCLOUD_TOKEN=your-hetzner-api-token
+kcl create hello --provider=hetzner
+</pre>
+<pre class="options">
+<span class="opt-row"><span class="opt-flag">--provider string</span><span class="opt-desc">Cloud provider to use (currently: hetzner)</span></span>
+<span class="opt-row"><span class="opt-flag">--image string</span><span class="opt-desc">OS image (default "ubuntu-24.04")</span></span>
+<span class="opt-row"><span class="opt-flag">--size string</span><span class="opt-desc">Instance size/type (default "cx23")</span></span>
+<span class="opt-row"><span class="opt-flag">--region string</span><span class="opt-desc">Region or location (default "nbg1")</span></span>
 </pre>
 
-<h2>Use exported kubeconfig</h2>
-
-<p>You should have kubectl instaled</p>
-
+<h2>Option B: Use your own existing server</h2>
 <pre>
-export KUBECONFIG=/path/to/hello.yaml
+kcl create hello --host=IP_or_hostname --user=username --key=path/to/key
 </pre>
+<pre class="options">
+<span class="opt-row"><span class="opt-flag">--host string</span><span class="opt-desc">VPS IP address or hostname</span></span>
+<span class="opt-row"><span class="opt-flag">--user string</span><span class="opt-desc">SSH user (default "root")</span></span>
+<span class="opt-row"><span class="opt-flag">--key string</span><span class="opt-desc">Path to SSH private key</span></span>
+<span class="opt-row"><span class="opt-flag">--password string</span><span class="opt-desc">SSH password (only needed the first time, if kcl's key isn't already on the server)</span></span>
+</pre>
+<p>
+If you don't pass <code>--key</code>, kcl generates one for you at
+<code>~/.kcl/ssh/&lt;cluster-name&gt;/id_ed25519</code> and installs it on the
+server automatically.
+</p>
+<p>
+<code>--provider</code> and <code>--host</code> can't be used together &mdash;
+pick one.
+</p>
+<p class="cmd-flags">
+<strong>Note:</strong> make sure ports <code>80</code>, <code>443</code>, and
+<code>6443</code> are open to inbound traffic (firewall / security group)
+&mdash; kcl needs them for HTTP/HTTPS ingress and the Kubernetes API server.
+</p>
 
-<h2>Verify</h2>
+<h2>What happens next</h2>
+<p>
+Once the node is reachable, kcl installs Kubernetes and automatically sets up
+ingress-nginx, cert-manager, and Let's Encrypt, so your cluster can serve
+HTTPS traffic right away.
+</p>
+
+<h2>Use your cluster</h2>
 <pre>
+kcl use hello
 kubectl get nodes
 </pre>
 
+<h1 id="providers">Providers</h1>
+<p>
+Currently supported for <code>--provider</code>:
+</p>
+<ul>
+  <li><code>hetzner</code></li>
+</ul>
+
+<h1 id="cli-reference">CLI Reference</h1>
+
+<section class="cmd" id="cli-create">
+<h2>kcl create &lt;name&gt;</h2>
+<p>Creates a new cluster, either on a provider-hosted VPS or your own server. See <a href="#create-cluster">Create a Cluster</a> above for a walkthrough.</p>
+<pre class="options">
+<span class="opt-row"><span class="opt-flag">--provider string</span><span class="opt-desc">Cloud provider to use (currently: hetzner). Requires HCLOUD_TOKEN. Cannot be used with --host</span></span>
+<span class="opt-row"><span class="opt-flag">--image string</span><span class="opt-desc">OS image, used with --provider (default "ubuntu-24.04")</span></span>
+<span class="opt-row"><span class="opt-flag">--size string</span><span class="opt-desc">Instance size/type, used with --provider (default "cx23")</span></span>
+<span class="opt-row"><span class="opt-flag">--region string</span><span class="opt-desc">Region or location, used with --provider (default "nbg1")</span></span>
+<span class="opt-row"><span class="opt-flag">--host string</span><span class="opt-desc">VPS IP address. Cannot be used with --provider</span></span>
+<span class="opt-row"><span class="opt-flag">--user string</span><span class="opt-desc">SSH user, used with --host (default "root")</span></span>
+<span class="opt-row"><span class="opt-flag">--key string</span><span class="opt-desc">Path to SSH private key, used with --host (auto-generated if omitted)</span></span>
+<span class="opt-row"><span class="opt-flag">--password string</span><span class="opt-desc">SSH password, used with --host (only needed the first time)</span></span>
+</pre>
+</section>
+
+<section class="cmd" id="cli-list">
+<h2>kcl list</h2>
+<p>Lists every cluster kcl is currently managing, along with its host address.</p>
+<pre>
+kcl list
+</pre>
+<p class="cmd-flags">No flags.</p>
+</section>
+
+<section class="cmd" id="cli-status">
+<h2>kcl status &lt;cluster-name&gt;</h2>
+<p>Shows a live dashboard for a cluster: SSH connectivity, control plane status (version, role, API server health), and current RAM/CPU usage on the node.</p>
+<pre>
+kcl status hello
+</pre>
+<p class="cmd-flags">No flags. Takes one positional argument, the cluster name.</p>
+</section>
+
+<section class="cmd" id="cli-use">
+<h2>kcl use &lt;cluster-name&gt;</h2>
+<p>Merges the cluster's kubeconfig into your default kubeconfig and switches your active <code>kubectl</code> context to it.</p>
+<pre>
+kcl use hello
+</pre>
+<p class="cmd-flags">No flags. Takes one positional argument, the cluster name.</p>
+</section>
+
+<section class="cmd" id="cli-sans">
+<h2>kcl sans add &lt;cluster-name&gt; &lt;ip-or-domain&gt;</h2>
+<p>
+Adds a trusted IP address or domain name to the cluster's API server
+certificate, so you can connect to <code>kubectl</code> using that address
+without a certificate error.
+</p>
+<pre>:
+kcl sans add hello api.example.com
+</pre>
+<p class="cmd-flags">No flags. Takes two positional arguments: cluster name, then the IP address or domain to trust.</p>
+<p class="cmd-flags">
+kcl detects your node's Kubernetes distribution (k0s, k3s, or kubeadm)
+automatically and restarts the control plane to apply the change. You may be
+prompted for the server's sudo password. Allow ~15 seconds after it finishes
+before running <code>kubectl</code> commands again.
+</p>
+</section>
+
 </main>
-
 </div>
-
 </body>
 </html>
